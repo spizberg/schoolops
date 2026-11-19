@@ -1,0 +1,171 @@
+<section class="page-head">
+  <div>
+    <h1>Annual promotion</h1>
+    <p class="muted">
+      Map last year's classes to this year's classes, preview the assignments, then apply.
+    </p>
+  </div>
+</section>
+
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+<section class="card" aria-labelledby="promotion-years-title">
+  <h2 id="promotion-years-title">Choose years</h2>
+  <form [formGroup]="yearForm" (ngSubmit)="loadClasses()" class="form-grid">
+    <label>
+      Source year
+      <select formControlName="source_year_id">
+        <option value="">Select a year</option>
+        @for (year of years(); track year.id) {
+          <option [value]="year.id">{{ year.label }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Target year
+      <select formControlName="target_year_id">
+        <option value="">Select a year</option>
+        @for (year of years(); track year.id) {
+          <option [value]="year.id">{{ year.label }}</option>
+        }
+      </select>
+    </label>
+    <div class="actions">
+      <button class="btn btn-secondary" type="submit" [disabled]="loading()">
+        Load classes
+      </button>
+    </div>
+  </form>
+</section>
+
+@if (sourceClasses().length > 0) {
+  <section class="card" aria-labelledby="mapping-title">
+    <h2 id="mapping-title">Class mapping</h2>
+    <form [formGroup]="mappingForm" (ngSubmit)="previewPromotion()">
+      <div formArrayName="mappings">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Source class</th>
+                <th scope="col">Target class</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (mapping of mappings.controls; track $index; let i = $index) {
+                <tr [formGroupName]="i">
+                  <td>{{ mapping.get('source_name')?.value }}</td>
+                  <td>
+                    <select formControlName="target_class_id">
+                      <option value="">Do not promote this class</option>
+                      @for (target of targetClasses(); track target.id) {
+                        <option [value]="target.id">
+                          {{ target.name }} ({{ target.age_band }})
+                        </option>
+                      }
+                    </select>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="actions section-gap">
+        <button class="btn btn-secondary" type="submit" [disabled]="saving()">
+          Preview promotion
+        </button>
+        @if (preview()) {
+          <button class="btn" type="button" [disabled]="saving()" (click)="applyPromotion()">
+            Apply promotion
+          </button>
+        }
+      </div>
+    </form>
+  </section>
+}
+
+@if (result(); as applied) {
+  <p class="notice" role="status">
+    Promotion applied: {{ applied.created }} enrollment(s) created, {{ applied.skipped }}
+    already enrolled.
+  </p>
+}
+
+@if (preview(); as data) {
+  <section class="card" aria-labelledby="preview-title">
+    <h2 id="preview-title">Preview</h2>
+    <div class="summary-grid">
+      <span class="badge active">Assign {{ data.counts.assign }}</span>
+      <span class="badge inactive">Unmatched {{ data.counts.unmatched }}</span>
+      <span class="badge">Already enrolled {{ data.counts.already_enrolled }}</span>
+    </div>
+
+    <h3>Assignments</h3>
+    @if (data.assignments.length === 0) {
+      <p class="empty">No children will be assigned.</p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Child</th>
+              <th scope="col">From</th>
+              <th scope="col">To</th>
+              <th scope="col">Age at target start</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (assignment of data.assignments; track assignment.child_id) {
+              <tr>
+                <td>{{ assignment.child_name }}</td>
+                <td>{{ assignment.source_class_name }}</td>
+                <td>{{ assignment.target_class_name }} ({{ assignment.target_age_band }})</td>
+                <td>{{ assignment.age_at_target_start }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <h3 class="section-gap">Unmatched</h3>
+    @if (data.unmatched.length === 0) {
+      <p class="empty">No unmatched children.</p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Child</th>
+              <th scope="col">Source class</th>
+              <th scope="col">Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of data.unmatched; track item.child_id) {
+              <tr>
+                <td>{{ item.child_name }}</td>
+                <td>{{ item.source_class_name ?? '—' }}</td>
+                <td>{{ item.reason }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <h3 class="section-gap">Already enrolled in target year</h3>
+    @if (data.already_enrolled.length === 0) {
+      <p class="empty">No children are already enrolled.</p>
+    } @else {
+      <ul class="inline-list">
+        @for (item of data.already_enrolled; track item.child_id) {
+          <li>{{ item.child_name }} — {{ item.target_class_name }}</li>
+        }
+      </ul>
+    }
+  </section>
+}

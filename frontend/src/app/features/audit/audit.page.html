@@ -1,0 +1,92 @@
+<section class="page-head">
+  <div>
+    <h1>Audit trail</h1>
+    <p class="muted">Append-only record of mutations, with the actor and changed values.</p>
+  </div>
+</section>
+
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+<section class="card" aria-labelledby="audit-filter-title">
+  <h2 id="audit-filter-title">Filters</h2>
+  <form [formGroup]="filters" (ngSubmit)="load()" class="form-grid">
+    <label>
+      Entity type
+      <select formControlName="entity_type">
+        <option value="">All</option>
+        <option value="child">Child</option>
+        <option value="guardian">Guardian</option>
+        <option value="child_guardian">Guardian link</option>
+        <option value="household">Household</option>
+        <option value="attendance">Attendance</option>
+        <option value="enrollment">Enrollment</option>
+        <option value="class">Class</option>
+        <option value="class_session">Session</option>
+        <option value="volunteer">Volunteer</option>
+        <option value="ministry_year">Ministry year</option>
+        <option value="promotion">Promotion</option>
+      </select>
+    </label>
+    <label>
+      Entity ID
+      <input formControlName="entity_id" placeholder="UUID" />
+    </label>
+    <label>
+      Action
+      <select formControlName="action">
+        <option value="">All</option>
+        <option value="create">Create</option>
+        <option value="update">Update</option>
+        <option value="delete">Delete</option>
+        <option value="generate">Generate</option>
+      </select>
+    </label>
+    <label>
+      From
+      <input type="date" formControlName="from" />
+    </label>
+    <label>
+      To
+      <input type="date" formControlName="to" />
+    </label>
+    <div class="actions">
+      <button class="btn btn-secondary" type="submit" [disabled]="loading()">Search</button>
+    </div>
+  </form>
+</section>
+
+<section class="card" aria-labelledby="audit-list-title">
+  <h2 id="audit-list-title">Records ({{ total() }})</h2>
+  @if (loading()) {
+    <p class="empty">Loading audit records…</p>
+  } @else if (logs().length === 0) {
+    <p class="empty">No audit records match these filters.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">When</th>
+            <th scope="col">Actor</th>
+            <th scope="col">Action</th>
+            <th scope="col">Entity</th>
+            <th scope="col">Changes</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (log of logs(); track log.id) {
+            <tr>
+              <td>{{ log.created_at }}</td>
+              <td>{{ log.actor_email ?? 'system' }}</td>
+              <td><span class="badge">{{ log.action }}</span></td>
+              <td>{{ log.entity_type }}<br /><span class="muted">{{ log.entity_id }}</span></td>
+              <td><pre class="changes">{{ formatChanges(log) }}</pre></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

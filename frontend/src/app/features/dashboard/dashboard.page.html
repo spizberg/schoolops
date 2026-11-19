@@ -1,0 +1,122 @@
+<section class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="muted">A quick view of the ministry year and today.</p>
+  </div>
+</section>
+
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+@if (loading()) {
+  <p class="empty">Loading dashboard…</p>
+} @else if (dashboard(); as data) {
+  <section class="card" aria-labelledby="year-title">
+    <h2 id="year-title">Active academic year</h2>
+    @if (data.active_year; as year) {
+      <p>
+        <strong>{{ year.label }}</strong>
+        <span class="muted">({{ year.start_date }} → {{ year.end_date }})</span>
+        <span class="badge active">active</span>
+      </p>
+      <p class="muted">Meeting days: {{ year.meeting_weekdays.join(', ') }} (ISO weekdays)</p>
+    } @else {
+      <p class="warning" role="alert">
+        No academic year is active. Activate one on the
+        <a routerLink="/years">Years</a> screen to set the default context.
+      </p>
+    }
+  </section>
+
+  <div class="stat-grid">
+    <article class="stat-card">
+      <div class="stat-value">{{ data.counts.children }}</div>
+      <div class="stat-label">Active children</div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-value">{{ data.counts.volunteers }}</div>
+      <div class="stat-label">Active volunteers</div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-value">{{ data.counts.classes }}</div>
+      <div class="stat-label">Classes</div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-value">{{ data.attendance_recorded_today }}</div>
+      <div class="stat-label">Attendance recorded today</div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-value">{{ data.not_seen_recently }}</div>
+      <div class="stat-label">Not seen in 30 days</div>
+    </article>
+  </div>
+
+  <section class="card" aria-labelledby="today-title">
+    <h2 id="today-title">Today's sessions — {{ data.today }}</h2>
+    @if (data.todays_sessions.length === 0) {
+      <p class="empty">No sessions scheduled for today.</p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Class</th>
+              <th scope="col">Time</th>
+              <th scope="col">Topic</th>
+              <th scope="col">Volunteers</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (session of data.todays_sessions; track session.id) {
+              <tr>
+                <td>{{ session.class_name }}</td>
+                <td>
+                  {{ session.start_time.slice(0, 5) }}–{{ session.end_time.slice(0, 5) }}
+                </td>
+                <td>{{ session.topic ?? '—' }}</td>
+                <td>{{ session.volunteers }}</td>
+                <td>
+                  <a class="btn btn-secondary btn-small" routerLink="/sessions">
+                    Open sessions
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <section class="card section-gap" aria-labelledby="not-seen-title">
+    <h2 id="not-seen-title">Not seen in the last 30 days</h2>
+    @if (notSeen(); as missing) {
+      @if (missing.items.length === 0) {
+        <p class="empty">Every active child has been seen recently.</p>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Child</th>
+                <th scope="col">Last present</th>
+                <th scope="col">Missed sessions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of missing.items; track item.child.id) {
+                <tr>
+                  <td>{{ item.child.first_name }} {{ item.child.last_name }}</td>
+                  <td>{{ item.last_present_on ?? 'Never' }}</td>
+                  <td>{{ item.missed_sessions }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </section>
+}

@@ -1,0 +1,201 @@
+<section class="page-head">
+  <div>
+    <h1>Classes and rosters</h1>
+    <p class="muted">Age-band classes belong to one ministry year. Capacity is informational.</p>
+  </div>
+</section>
+
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+<section class="card" aria-labelledby="class-form-title">
+  <h2 id="class-form-title">Create a class</h2>
+  @if (years().length === 0) {
+    <p class="empty">Create a ministry year first.</p>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="createClass()" class="form-grid">
+      <label>
+        Name
+        <input formControlName="name" placeholder="Preschool" />
+      </label>
+      <label>
+        Ministry year
+        <select formControlName="ministry_year_id">
+          <option value="">Select a year</option>
+          @for (year of years(); track year.id) {
+            <option [value]="year.id">{{ year.label }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Age band
+        <input formControlName="age_band" placeholder="3-5 years" />
+      </label>
+      <label>
+        Minimum age
+        <input type="number" min="0" formControlName="age_min" />
+      </label>
+      <label>
+        Maximum age
+        <input type="number" min="0" formControlName="age_max" />
+      </label>
+      <label>
+        Lead volunteer
+        <select formControlName="lead_volunteer_id">
+          <option value="">No lead volunteer</option>
+          @for (volunteer of volunteers(); track volunteer.id) {
+            <option [value]="volunteer.id">{{ volunteer.first_name }} {{ volunteer.last_name }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Room
+        <input formControlName="room" />
+      </label>
+      <label>
+        Capacity (informational)
+        <input type="number" min="1" formControlName="capacity" />
+      </label>
+      <label class="span-full">
+        Curriculum overview
+        <textarea formControlName="curriculum"></textarea>
+      </label>
+      <div class="actions">
+        <button class="btn" type="submit" [disabled]="saving()">Create class</button>
+      </div>
+    </form>
+  }
+</section>
+
+<section class="card" aria-labelledby="classes-title">
+  <h2 id="classes-title">Classes</h2>
+  <form [formGroup]="filters" (ngSubmit)="loadClasses()" class="toolbar">
+    <label>
+      Ministry year
+      <select formControlName="ministry_year_id">
+        <option value="">All years</option>
+        @for (year of years(); track year.id) {
+          <option [value]="year.id">{{ year.label }}</option>
+        }
+      </select>
+    </label>
+    <div class="actions">
+      <button class="btn btn-secondary" type="submit">Filter</button>
+    </div>
+  </form>
+
+  @if (loading()) {
+    <p class="empty">Loading classes…</p>
+  } @else if (classes().length === 0) {
+    <p class="empty">No classes yet.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Year</th>
+            <th scope="col">Age band</th>
+            <th scope="col">Lead volunteer</th>
+            <th scope="col">Room</th>
+            <th scope="col">Capacity</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (schoolClass of classes(); track schoolClass.id) {
+            <tr>
+              <td>{{ schoolClass.name }}</td>
+              <td>{{ yearLabel(schoolClass.ministry_year_id) }}</td>
+              <td>{{ schoolClass.age_band }}</td>
+              <td>{{ volunteerName(schoolClass.lead_volunteer_id) }}</td>
+              <td>{{ schoolClass.room ?? '—' }}</td>
+              <td>{{ schoolClass.capacity ?? '—' }}</td>
+              <td>
+                <div class="actions">
+                  <button type="button" class="btn btn-secondary btn-small" (click)="selectClass(schoolClass)">
+                    Roster
+                  </button>
+                  <button type="button" class="btn btn-danger btn-small" (click)="deleteClass(schoolClass)">
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (selected(); as schoolClass) {
+  <section class="card section-gap" aria-labelledby="roster-title">
+    <h2 id="roster-title">Roster — {{ schoolClass.name }}</h2>
+    <p class="muted">Children enrolled on {{ today }}.</p>
+
+    @if (rosterLoading()) {
+      <p class="empty">Loading roster…</p>
+    } @else if (roster().length === 0) {
+      <p class="empty">No children enrolled on this date.</p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Child</th>
+              <th scope="col">Date of birth</th>
+              <th scope="col">Start</th>
+              <th scope="col">End</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of roster(); track entry.id) {
+              <tr>
+                <td>{{ entry.child.first_name }} {{ entry.child.last_name }}</td>
+                <td>{{ entry.child.date_of_birth }}</td>
+                <td>{{ entry.start_date }}</td>
+                <td>{{ entry.end_date ?? '—' }}</td>
+                <td>
+                  <button type="button" class="btn btn-danger btn-small" (click)="endEnrollment(entry)">
+                    End today
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <h3 class="section-gap">Enroll a child</h3>
+    @if (children().length === 0) {
+      <p class="empty">No active children available.</p>
+    } @else {
+      <form [formGroup]="enrollForm" (ngSubmit)="enroll()" class="form-grid">
+        <label>
+          Child
+          <select formControlName="child_id">
+            <option value="">Select a child</option>
+            @for (child of children(); track child.id) {
+              <option [value]="child.id">{{ child.first_name }} {{ child.last_name }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Start date
+          <input type="date" formControlName="start_date" />
+        </label>
+        <label>
+          End date (optional)
+          <input type="date" formControlName="end_date" />
+        </label>
+        <div class="actions">
+          <button class="btn" type="submit" [disabled]="saving()">Enroll</button>
+        </div>
+      </form>
+    }
+  </section>
+}

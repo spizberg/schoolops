@@ -1,0 +1,267 @@
+<section class="page-head">
+  <div>
+    <h1>Children</h1>
+    <p class="muted">
+      Date of birth drives age-band grouping. Allergies and medical notes appear on the
+      attendance roster.
+    </p>
+  </div>
+</section>
+
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+<section class="card" aria-labelledby="child-form-title">
+  <h2 id="child-form-title">{{ editingId() ? 'Edit child' : 'Add a child' }}</h2>
+  <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
+    <label>
+      First name
+      <input formControlName="first_name" autocomplete="given-name" />
+    </label>
+    <label>
+      Last name
+      <input formControlName="last_name" autocomplete="family-name" />
+    </label>
+    <label>
+      Date of birth
+      <input type="date" formControlName="date_of_birth" />
+    </label>
+    <label>
+      Household
+      <select formControlName="household_id">
+        <option value="">No household</option>
+        @for (household of households(); track household.id) {
+          <option [value]="household.id">{{ household.name ?? 'Unnamed household' }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Grade (optional)
+      <input formControlName="grade" />
+    </label>
+    <label>
+      Photo consent
+      <select formControlName="photo_consent">
+        <option value="not_recorded">Not recorded</option>
+        <option value="granted">Granted</option>
+        <option value="denied">Denied</option>
+      </select>
+    </label>
+    <label>
+      Status
+      <select formControlName="status">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+        <option value="visitor">Visitor</option>
+        <option value="left">Left</option>
+      </select>
+    </label>
+    <label>
+      Joined on
+      <input type="date" formControlName="joined_on" />
+    </label>
+    <label class="span-full">
+      Allergies
+      <textarea formControlName="allergies"></textarea>
+    </label>
+    <label class="span-full">
+      Medical notes
+      <textarea formControlName="medical_notes"></textarea>
+    </label>
+    <label class="span-full">
+      Notes
+      <textarea formControlName="notes"></textarea>
+    </label>
+    <div class="actions">
+      <button class="btn" type="submit" [disabled]="saving()">
+        {{ editingId() ? 'Save changes' : 'Add child' }}
+      </button>
+      @if (editingId()) {
+        <button class="btn btn-secondary" type="button" (click)="cancelEdit()">Cancel</button>
+      }
+    </div>
+  </form>
+</section>
+
+<section class="card" aria-labelledby="children-title">
+  <h2 id="children-title">Children ({{ total() }})</h2>
+  <form [formGroup]="filters" (ngSubmit)="load()" class="toolbar">
+    <label>
+      Search
+      <input formControlName="q" placeholder="Child name" />
+    </label>
+    <label>
+      Status
+      <select formControlName="status">
+        <option value="">All</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+        <option value="visitor">Visitor</option>
+        <option value="left">Left</option>
+      </select>
+    </label>
+    <label>
+      Household
+      <select formControlName="household_id">
+        <option value="">All</option>
+        @for (household of households(); track household.id) {
+          <option [value]="household.id">{{ household.name ?? 'Unnamed household' }}</option>
+        }
+      </select>
+    </label>
+    <div class="actions">
+      <button class="btn btn-secondary" type="submit">Search</button>
+    </div>
+  </form>
+
+  @if (loading()) {
+    <p class="empty">Loading children…</p>
+  } @else if (children().length === 0) {
+    <p class="empty">No children match these filters.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Date of birth</th>
+            <th scope="col">Household</th>
+            <th scope="col">Guardians</th>
+            <th scope="col">Status</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (child of children(); track child.id) {
+            <tr>
+              <td>{{ child.first_name }} {{ child.last_name }}</td>
+              <td>{{ child.date_of_birth }}</td>
+              <td>{{ householdName(child.household_id) }}</td>
+              <td>
+                {{ child.guardian_count }}
+                @if (child.status === 'active' && child.guardian_count === 0) {
+                  <span class="badge inactive">no guardian</span>
+                }
+              </td>
+              <td><span class="badge" [class.active]="child.status === 'active'">{{ child.status }}</span></td>
+              <td>
+                <div class="actions">
+                  <button type="button" class="btn btn-secondary btn-small" (click)="selectChild(child)">
+                    Guardians
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-small" (click)="startEdit(child)">
+                    Edit
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (selectedChild(); as child) {
+  <section class="card section-gap" aria-labelledby="guardian-links-title">
+    <h2 id="guardian-links-title">
+      Guardians — {{ child.first_name }} {{ child.last_name }}
+    </h2>
+
+    @if (child.status === 'active' && guardianLinks().length === 0) {
+      <p class="warning" role="alert">
+        This active child has no guardian contact. Add one before relying on this record
+        in an emergency.
+      </p>
+    }
+
+    <form [formGroup]="linkForm" (ngSubmit)="saveLink()" class="form-grid">
+      <label>
+        Guardian
+        <select formControlName="guardian_id">
+          <option value="">Select a guardian</option>
+          @for (guardian of availableGuardians(); track guardian.id) {
+            <option [value]="guardian.id">{{ guardianLabel(guardian) }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Relationship
+        <input formControlName="relationship" placeholder="Mother, Grandparent…" />
+      </label>
+      <div class="checkbox-row">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="is_primary" /> Primary
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="is_emergency" /> Emergency
+        </label>
+      </div>
+      <div class="actions">
+        <button class="btn" type="submit" [disabled]="linkSaving()">Link guardian</button>
+      </div>
+    </form>
+    <p class="muted">
+      Need to add a guardian? Use the
+      <a routerLink="/families">Families and guardians</a> screen.
+    </p>
+
+    @if (guardianLinks().length === 0) {
+      <p class="empty">No guardians linked to this child.</p>
+    } @else {
+      <div class="table-wrap section-gap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Guardian</th>
+              <th scope="col">Relationship</th>
+              <th scope="col">Phone</th>
+              <th scope="col">Flags</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (link of guardianLinks(); track link.id) {
+              <tr>
+                <td>{{ link.guardian.first_name }} {{ link.guardian.last_name }}</td>
+                <td>{{ link.relationship }}</td>
+                <td>{{ link.guardian.phone }}</td>
+                <td>
+                  <div class="actions">
+                    @if (link.is_primary) {
+                      <span class="badge active">primary</span>
+                    }
+                    @if (link.is_emergency) {
+                      <span class="badge inactive">emergency</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <div class="actions">
+                    @if (!link.is_primary) {
+                      <button
+                        type="button"
+                        class="btn btn-secondary btn-small"
+                        (click)="setPrimary(link)"
+                      >
+                        Set primary
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      class="btn btn-danger btn-small"
+                      (click)="removeLink(link)"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}

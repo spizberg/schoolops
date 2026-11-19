@@ -9,6 +9,23 @@ wheels/
 # Virtual environments
 .venv
 
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Frontend
+node_modules/
+frontend/dist/
+frontend/.angular/
+
 # MCP configs
 .code-review-graph/
 .serena/

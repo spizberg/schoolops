@@ -1,0 +1,123 @@
+<section class="page-head">
+  <div>
+    <h1>Volunteers</h1>
+    <p class="muted">Phone is required; email is optional. Deactivation preserves history.</p>
+  </div>
+</section>
+
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+<section class="card" aria-labelledby="volunteer-form-title">
+  <h2 id="volunteer-form-title">
+    {{ editingId() ? 'Edit volunteer' : 'Add a volunteer' }}
+  </h2>
+  <form [formGroup]="form" (ngSubmit)="save()" class="form-grid">
+    <label>
+      First name
+      <input formControlName="first_name" autocomplete="given-name" />
+    </label>
+    <label>
+      Last name
+      <input formControlName="last_name" autocomplete="family-name" />
+    </label>
+    <label>
+      Phone
+      <input formControlName="phone" autocomplete="tel" />
+    </label>
+    <label>
+      Email (optional)
+      <input type="email" formControlName="email" autocomplete="email" />
+    </label>
+    <label>
+      Joined on
+      <input type="date" formControlName="joined_on" />
+    </label>
+    <div class="actions">
+      <button class="btn" type="submit" [disabled]="saving()">
+        {{ editingId() ? 'Save changes' : 'Add volunteer' }}
+      </button>
+      @if (editingId()) {
+        <button class="btn btn-secondary" type="button" (click)="cancelEdit()">Cancel</button>
+      }
+    </div>
+  </form>
+</section>
+
+<section class="card" aria-labelledby="volunteers-title">
+  <h2 id="volunteers-title">Volunteers ({{ total() }})</h2>
+  <form [formGroup]="filters" (ngSubmit)="load()" class="toolbar">
+    <label>
+      Search
+      <input formControlName="q" placeholder="Name, phone, or email" />
+    </label>
+    <label>
+      Status
+      <select formControlName="status">
+        <option value="">All</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </label>
+    <div class="actions">
+      <button class="btn btn-secondary" type="submit">Search</button>
+    </div>
+  </form>
+
+  @if (loading()) {
+    <p class="empty">Loading volunteers…</p>
+  } @else if (volunteers().length === 0) {
+    <p class="empty">No volunteers match these filters.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Phone</th>
+            <th scope="col">Email</th>
+            <th scope="col">Joined</th>
+            <th scope="col">Status</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (volunteer of volunteers(); track volunteer.id) {
+            <tr>
+              <td>{{ volunteer.first_name }} {{ volunteer.last_name }}</td>
+              <td>{{ volunteer.phone }}</td>
+              <td>{{ volunteer.email ?? '—' }}</td>
+              <td>{{ volunteer.joined_on ?? '—' }}</td>
+              <td>
+                <span class="badge" [class.active]="volunteer.status === 'active'">
+                  {{ volunteer.status }}
+                </span>
+              </td>
+              <td>
+                <div class="actions">
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-small"
+                    (click)="startEdit(volunteer)"
+                  >
+                    Edit
+                  </button>
+                  @if (volunteer.status === 'active') {
+                    <button
+                      type="button"
+                      class="btn btn-danger btn-small"
+                      (click)="deactivate(volunteer)"
+                    >
+                      Deactivate
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

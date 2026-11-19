@@ -1,0 +1,225 @@
+<section class="page-head">
+  <div>
+    <h1>Families and guardians</h1>
+    <p class="muted">Households group siblings; guardians can be shared or linked across households.</p>
+  </div>
+</section>
+
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+<section class="card" aria-labelledby="households-title">
+  <h2 id="households-title">Households ({{ householdTotal() }})</h2>
+  <form [formGroup]="householdSearch" (ngSubmit)="loadHouseholds()" class="toolbar">
+    <label>
+      Search
+      <input formControlName="q" placeholder="Family name or address" />
+    </label>
+    <div class="actions">
+      <button class="btn btn-secondary" type="submit">Search</button>
+    </div>
+  </form>
+
+  @if (loading()) {
+    <p class="empty">Loading households…</p>
+  } @else if (households().length === 0) {
+    <p class="empty">No households yet.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Household</th>
+            <th scope="col">Address</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (household of households(); track household.id) {
+            <tr>
+              <td>{{ household.name ?? 'Unnamed household' }}</td>
+              <td>{{ household.address ?? '—' }}</td>
+              <td>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-small"
+                  (click)="selectHousehold(household)"
+                >
+                  Open
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<section class="card" aria-labelledby="household-form-title">
+  <h2 id="household-form-title">
+    {{ editingHousehold() ? 'Edit household' : 'Add a household' }}
+  </h2>
+  <form [formGroup]="householdForm" (ngSubmit)="saveHousehold()" class="form-grid">
+    <label>
+      Name (optional)
+      <input formControlName="name" placeholder="The Hopper family" />
+    </label>
+    <label class="span-full">
+      Address (optional)
+      <textarea formControlName="address"></textarea>
+    </label>
+    <label class="span-full">
+      Notes (optional)
+      <textarea formControlName="notes"></textarea>
+    </label>
+    <div class="actions">
+      <button class="btn" type="submit" [disabled]="saving()">
+        {{ editingHousehold() ? 'Save household' : 'Add household' }}
+      </button>
+      @if (editingHousehold()) {
+        <button class="btn btn-secondary" type="button" (click)="cancelHouseholdEdit()">
+          Cancel
+        </button>
+      }
+      @if (selectedHousehold() && !editingHousehold()) {
+        <button class="btn btn-secondary" type="button" (click)="startEditHousehold()">
+          Edit selected
+        </button>
+      }
+    </div>
+  </form>
+</section>
+
+@if (selectedHousehold(); as household) {
+  <section class="card section-gap" aria-labelledby="guardians-title">
+    <h2 id="guardians-title">Guardians — {{ household.name ?? 'Unnamed household' }}</h2>
+
+    <form [formGroup]="guardianForm" (ngSubmit)="saveGuardian()" class="form-grid">
+      <label>
+        First name
+        <input formControlName="first_name" autocomplete="given-name" />
+      </label>
+      <label>
+        Last name
+        <input formControlName="last_name" autocomplete="family-name" />
+      </label>
+      <label>
+        Phone
+        <input formControlName="phone" autocomplete="tel" />
+      </label>
+      <label>
+        Email (optional)
+        <input type="email" formControlName="email" autocomplete="email" />
+      </label>
+      <label class="span-full">
+        Notes (optional)
+        <textarea formControlName="notes"></textarea>
+      </label>
+      <div class="actions">
+        <button class="btn" type="submit" [disabled]="guardianSaving()">
+          {{ editingGuardianId() ? 'Save guardian' : 'Add guardian' }}
+        </button>
+        @if (editingGuardianId()) {
+          <button class="btn btn-secondary" type="button" (click)="cancelGuardianEdit()">
+            Cancel
+          </button>
+        }
+      </div>
+    </form>
+
+    @if (guardians().length === 0) {
+      <p class="empty">No guardians in this household yet.</p>
+    } @else {
+      <div class="table-wrap section-gap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Phone</th>
+              <th scope="col">Email</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (guardian of guardians(); track guardian.id) {
+              <tr>
+                <td>{{ guardian.first_name }} {{ guardian.last_name }}</td>
+                <td>{{ guardian.phone }}</td>
+                <td>{{ guardian.email ?? '—' }}</td>
+                <td>
+                  <div class="actions">
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-small"
+                      (click)="startEditGuardian(guardian)"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-danger btn-small"
+                      (click)="deleteGuardian(guardian)"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}
+
+<section class="card section-gap" aria-labelledby="guardian-search-title">
+  <h2 id="guardian-search-title">Find a guardian</h2>
+  <form [formGroup]="guardianSearch" (ngSubmit)="searchGuardians()" class="toolbar">
+    <label>
+      Name, phone, or email
+      <input formControlName="q" placeholder="e.g. Hopper or +33 6" />
+    </label>
+    <div class="actions">
+      <button class="btn btn-secondary" type="submit">Search guardians</button>
+    </div>
+  </form>
+
+  @if (guardianSearchTotal() > 0) {
+    <p class="muted">{{ guardianSearchTotal() }} guardian(s) found.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Guardian</th>
+            <th scope="col">Phone</th>
+            <th scope="col">Household</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (guardian of guardianSearchResults(); track guardian.id) {
+            <tr>
+              <td>{{ guardian.first_name }} {{ guardian.last_name }}</td>
+              <td>{{ guardian.phone }}</td>
+              <td>{{ guardian.household_id ? 'Open family' : 'No household' }}</td>
+              <td>
+                @if (guardian.household_id) {
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-small"
+                    (click)="openGuardianHousehold(guardian)"
+                  >
+                    Open household
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

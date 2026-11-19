@@ -1,0 +1,168 @@
+<section class="page-head">
+  <div>
+    <h1>Ministry years</h1>
+    <p class="muted">Each year defines its meeting week and closures. Sunday is the default.</p>
+  </div>
+</section>
+
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+<section class="card" aria-labelledby="new-year-title">
+  <h2 id="new-year-title">Create a year</h2>
+  <form [formGroup]="yearForm" (ngSubmit)="createYear()" class="form-grid">
+    <label>
+      Label
+      <input formControlName="label" placeholder="2026-2027" autocomplete="off" />
+    </label>
+    <label>
+      Start date
+      <input type="date" formControlName="start_date" />
+    </label>
+    <label>
+      End date
+      <input type="date" formControlName="end_date" />
+    </label>
+    <label class="checkbox-label">
+      <span>Active on creation</span>
+      <input type="checkbox" formControlName="is_active" />
+    </label>
+    <div>
+      <button class="btn" type="submit" [disabled]="saving()">Create year</button>
+    </div>
+  </form>
+</section>
+
+<section class="card" aria-labelledby="years-title">
+  <h2 id="years-title">Years</h2>
+  @if (loading()) {
+    <p class="empty">Loading years…</p>
+  } @else if (years().length === 0) {
+    <p class="empty">No ministry years yet.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Label</th>
+            <th scope="col">Dates</th>
+            <th scope="col">Meeting days</th>
+            <th scope="col">Status</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (year of years(); track year.id) {
+            <tr>
+              <td>{{ year.label }}</td>
+              <td>{{ year.start_date }} → {{ year.end_date }}</td>
+              <td>{{ weekdays(year.meeting_weekdays) }}</td>
+              <td>
+                <span class="badge" [class.active]="year.is_active">
+                  {{ year.is_active ? 'active' : 'inactive' }}
+                </span>
+              </td>
+              <td>
+                <div class="actions">
+                  <button type="button" class="btn btn-secondary btn-small" (click)="selectYear(year)">
+                    Calendar
+                  </button>
+                  @if (!year.is_active) {
+                    <button type="button" class="btn btn-small" (click)="activate(year)">
+                      Activate
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (selected(); as year) {
+  <section class="card section-gap" aria-labelledby="calendar-title">
+    <h2 id="calendar-title">Calendar — {{ year.label }}</h2>
+
+    <form [formGroup]="dayForm" (ngSubmit)="addNoClassDay()" class="form-grid">
+      <label>
+        Date
+        <input type="date" formControlName="date" />
+      </label>
+      <label>
+        Name
+        <input formControlName="name" placeholder="Church picnic" />
+      </label>
+      <label>
+        Kind
+        <select formControlName="kind">
+          <option value="holiday">Holiday</option>
+          <option value="closure">Closure</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
+      <div>
+        <button class="btn" type="submit" [disabled]="saving()">Add no-class day</button>
+      </div>
+    </form>
+
+    @if (noClassDays().length === 0) {
+      <p class="empty">No no-class days in this year.</p>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Name</th>
+              <th scope="col">Kind</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (day of noClassDays(); track day.id) {
+              <tr>
+                <td>{{ day.date }}</td>
+                <td>{{ day.name }}</td>
+                <td><span class="badge">{{ day.kind }}</span></td>
+                <td>
+                  <button type="button" class="btn btn-danger btn-small" (click)="deleteNoClassDay(day)">
+                    Remove
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <h3 class="section-gap">Meeting days</h3>
+    <form [formGroup]="rangeForm" (ngSubmit)="loadMeetingDays()" class="form-grid">
+      <label>
+        From
+        <input type="date" formControlName="from" />
+      </label>
+      <label>
+        To
+        <input type="date" formControlName="to" />
+      </label>
+      <div>
+        <button class="btn btn-secondary" type="submit">Show meeting days</button>
+      </div>
+    </form>
+
+    @if (meetingDays().length === 0) {
+      <p class="empty">No meeting days in this range.</p>
+    } @else {
+      <ul class="inline-list" aria-label="Meeting days in the selected range">
+        @for (day of meetingDays(); track day) {
+          <li>{{ day }}</li>
+        }
+      </ul>
+    }
+  </section>
+}

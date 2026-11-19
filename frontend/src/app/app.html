@@ -1,0 +1,26 @@
+<header class="app-header">
+  <a class="brand" routerLink="/dashboard">Children's Bible Study Group</a>
+  @if (auth.isAuthenticated()) {
+    <nav aria-label="Main navigation">
+      <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+      <a routerLink="/ministry-years" routerLinkActive="active">Years</a>
+      <a routerLink="/volunteers" routerLinkActive="active">Volunteers</a>
+      <a routerLink="/children" routerLinkActive="active">Children</a>
+      <a routerLink="/families" routerLinkActive="active">Families</a>
+      <a routerLink="/classes" routerLinkActive="active">Classes</a>
+      <a routerLink="/promotion" routerLinkActive="active">Promotion</a>
+      <a routerLink="/sessions" routerLinkActive="active">Sessions</a>
+      <a routerLink="/audit" routerLinkActive="active">Audit</a>
+    </nav>
+    <div class="session">
+      <span class="muted">{{ auth.user()?.email }}</span>
+      <button class="btn btn-secondary btn-small" type="button" (click)="auth.logout()">
+        Log out
+      </button>
+    </div>
+  }
+</header>
+
+<main class="container">
+  <router-outlet />
+</main>
