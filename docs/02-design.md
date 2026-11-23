@@ -48,7 +48,7 @@ behind a proxy.
 ├── frontend/                    # Angular app
 ├── docs/                        # requirements, design, ADRs
 ├── docker-compose.yml
-├── Makefile
+├── justfile
 └── README.md
 ```
 
@@ -179,7 +179,7 @@ only) and are the source of truth for the Angular client.
   again. Phase 2 adds a rotating refresh token in an `HttpOnly`, `Secure`,
   `SameSite=Strict` cookie.
 - The first admin is created with
-  `python -m schoolops.cli create-admin --email ...` (or `make admin email=...`).
+  `python -m schoolops.cli create-admin --email ...` (or `just admin <email>`).
 - See ADR-0003.
 
 ## 6. Meeting-day and attendance rules

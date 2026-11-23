@@ -25,4 +25,4 @@ tested independently of HTTP.
 - The OpenAPI document is the contract; Angular types can be generated from it.
 - We build all admin screens ourselves (Django admin was considered and rejected for UX
   control and API-first design).
-- Two toolchains (uv and npm) in one repo; the Makefile is the single entry point.
+- Two toolchains (uv and npm) in one repo; the justfile is the single entry point.

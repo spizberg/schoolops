@@ -11,7 +11,7 @@ command, and get the same lint, type, and test results as CI.
 ## Workflow
 
 1. Inspect what already exists before adding tooling: `pyproject.toml`, lockfile,
-   `Makefile`/`justfile`, CI config, `.pre-commit-config.yaml`.
+   `justfile`, CI config, `.pre-commit-config.yaml`.
 2. Choose the supported Python range. Do not claim support you do not test.
    Prefer the oldest version you must support, and test the newest too.
 3. Put all tool configuration in `pyproject.toml` unless a tool requires its own
@@ -26,6 +26,7 @@ command, and get the same lint, type, and test results as CI.
 | Concern | Default | Notes |
 | --- | --- | --- |
 | Env + deps | `uv` | Fast, lockfile-based, manages Python versions |
+| Task runner | `just` | One `just check` command for local and CI |
 | Lint + format | `ruff` | Replace flake8, isort, pyupgrade, and most plugins |
 | Types | `mypy --strict` or `pyright` / `ty` | Strict from day one; loosening later is painful |
 | Tests | `pytest` | Plus `pytest-cov`, `hypothesis` for tricky logic |
@@ -74,25 +75,34 @@ package after the import name, not the repository name.
 
 ## Quality gate
 
-Expose one command. A `Makefile` is enough:
+Expose one command. A `justfile` is enough:
 
-```make
-.PHONY: check
-check: lint type test
+```just
+# List available recipes
+default:
+    @just --list
 
+# Check formatting and lint
 lint:
-	uv run ruff format --check .
-	uv run ruff check .
+    uv run ruff format --check .
+    uv run ruff check .
 
+# Type-check
 type:
-	uv run mypy src tests
+    uv run mypy src tests
 
+# Run tests with coverage
 test:
-	uv run pytest --cov --cov-report=term-missing
+    uv run pytest --cov --cov-report=term-missing
+
+# Full quality gate
+check: lint type test
 ```
 
-`uv run` guarantees the tool runs in the project environment. Never tell a
-contributor to activate a virtualenv manually.
+Recipes run sequentially in dependency order, so `just check` stops on the first
+failure. Add a `#` comment above each recipe: `just` and `just --list` use them as
+help text. `uv run` guarantees the tool runs in the project environment. Never
+tell a contributor to activate a virtualenv manually.
 
 ## CI rules
 

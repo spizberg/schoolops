@@ -24,18 +24,21 @@ docs/        Requirements, design, decision records
 
 ## Quickstart
 
-Prerequisites: `uv`, Docker, and (for the frontend) Node.js 22/24 LTS.
+Prerequisites: [`just`](https://github.com/casey/just), `uv`, Docker, and (for the
+frontend) Node.js 22/24 LTS.
 
 ```bash
-cp .env.example backend/.env      # local settings
-make install                      # backend dependencies
-make web-install                  # frontend dependencies
-make db-up                        # PostgreSQL on localhost:5433
-make migrate                      # apply migrations
-make admin email=admin@example.com # prompts for a password
-make api                          # http://localhost:8000/docs
-make web                          # http://localhost:4200 (proxies /v1 to the API)
+cp .env.example backend/.env         # local settings
+just install                         # backend dependencies
+just web-install                     # frontend dependencies
+just db-up                           # PostgreSQL on localhost:5433
+just migrate                         # apply migrations
+just admin admin@example.com         # prompts for a password
+just api                             # http://localhost:8000/docs
+just web                             # http://localhost:4200 (proxies /v1 to the API)
 ```
+
+Run `just` with no arguments to list every recipe.
 
 Health checks: `GET /health/live` and `GET /health/ready`. The Angular dev server uses
 `frontend/proxy.conf.json`, so the browser talks to `/v1` on the same origin.
@@ -43,7 +46,7 @@ Health checks: `GET /health/live` and `GET /health/ready`. The Angular dev serve
 ## Quality gate
 
 ```bash
-make check    # ruff + mypy + pytest, then Angular build and unit tests
+just check    # ruff + mypy + pytest, then Angular build and unit tests
 ```
 
 The same commands run in CI (`.github/workflows/ci.yml`). Integration tests use a
