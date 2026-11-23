@@ -6,6 +6,7 @@ services:
       POSTGRES_USER: schoolops
       POSTGRES_PASSWORD: schoolops
     ports:
+      # Host port 5433 keeps the local dev setup (`just db-up`) unchanged.
       - "5433:5432"
     volumes:
       - schoolops-pgdata:/var/lib/postgresql
@@ -14,6 +15,52 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./backend
+    environment:
+      ENVIRONMENT: local
+      DEBUG: "false"
+      DATABASE_URL: postgresql+asyncpg://schoolops:schoolops@db:5432/schoolops
+      CORS_ORIGINS: '["http://localhost:8080"]'
+      JWT_SECRET: ${JWT_SECRET:-dev-only-change-me-please-use-32-chars}
+      LOG_LEVEL: INFO
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    init: true
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
 volumes:
   schoolops-pgdata:

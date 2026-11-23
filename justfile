@@ -23,6 +23,18 @@ db-reset:
     docker compose down -v
     docker compose up -d db
 
+# Build and run the full stack: web on :8080, API on :8000
+up:
+    docker compose up --build
+
+# Build and run the full stack in the background
+up-detached:
+    docker compose up --build -d
+
+# Stop the full stack (keeps the database volume)
+down:
+    docker compose down
+
 # Run the API with reload on :8000
 api:
     cd backend && uv run uvicorn schoolops.main:app --reload --port 8000
@@ -46,6 +58,10 @@ admin email:
 # Run backend tests
 test:
     cd backend && uv run pytest
+
+# Format backend code
+format:
+    cd backend && uv run ruff format .
 
 # Check formatting and lint
 lint:

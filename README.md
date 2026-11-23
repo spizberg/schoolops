@@ -12,6 +12,7 @@ attendance (including one-off visitors), and attendance reports.
 | --- | --- |
 | [Requirements](docs/01-requirements.md) | Scope, user stories, acceptance criteria, assumptions |
 | [Technical design](docs/02-design.md) | Architecture, ERD, API contract, testing and deployment |
+| [Agent workflow](docs/03-agent-workflow.md) | Orchestrator + subagents for the full-stack SDLC, with human gates |
 | [ADRs](docs/adr/) | Recorded design decisions |
 
 ## Repository layout
@@ -39,6 +40,32 @@ just web                             # http://localhost:4200 (proxies /v1 to the
 ```
 
 Run `just` with no arguments to list every recipe.
+
+### Full stack in Docker (one command)
+
+```bash
+just up            # docker compose up --build
+```
+
+| Service | URL |
+| --- | --- |
+| Web UI | http://localhost:8080 |
+| API docs | http://localhost:8000/docs (also http://localhost:8080/docs) |
+| API | http://localhost:8000/v1 |
+| PostgreSQL | localhost:5433 |
+
+The API container applies Alembic migrations on startup and waits for PostgreSQL via
+health checks; nginx serves the Angular build and proxies `/v1` to the API. Data persists
+in the `schoolops-pgdata` volume.
+
+```bash
+just up-detached   # same, in the background
+just down          # stop everything (volume kept)
+docker compose down -v   # stop and delete the database volume
+```
+
+Set a real `JWT_SECRET` in the shell or in a root `.env` before exposing the stack beyond
+your machine.
 
 Health checks: `GET /health/live` and `GET /health/ready`. The Angular dev server uses
 `frontend/proxy.conf.json`, so the browser talks to `/v1` on the same origin.
