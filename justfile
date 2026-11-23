@@ -55,6 +55,10 @@ migration message:
 admin email:
     cd backend && uv run python -m schoolops.cli create-admin --email "{{email}}"
 
+# Seed a demo ministry year, families, children, classes, sessions, and attendance
+demo:
+    cd backend && uv run python -m schoolops.cli seed-demo
+
 # Run backend tests
 test:
     cd backend && uv run pytest

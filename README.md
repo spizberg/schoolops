@@ -34,6 +34,7 @@ just install                         # backend dependencies
 just web-install                     # frontend dependencies
 just db-up                           # PostgreSQL on localhost:5433
 just migrate                         # apply migrations
+just demo                            # seed demo ministry data
 just admin admin@example.com         # prompts for a password
 just api                             # http://localhost:8000/docs
 just web                             # http://localhost:4200 (proxies /v1 to the API)
@@ -67,7 +68,23 @@ docker compose down -v   # stop and delete the database volume
 Set a real `JWT_SECRET` in the shell or in a root `.env` before exposing the stack beyond
 your machine.
 
-Health checks: `GET /health/live` and `GET /health/ready`. The Angular dev server uses
+Health checks: `GET /health/live` and `GET /health/ready`.
+
+## Demo data
+
+```bash
+just demo
+```
+
+Creates two ministry years, volunteers, households, guardians, children, age-band
+classes, enrollments, Sunday sessions, session volunteers, attendance, and visitor
+entries. The `2026-2027` year is active; `2025-2026` is available for the promotion
+screen. The seed refuses to run when ministry years already exist, so it will not
+duplicate data.
+
+The most recent session is Sunday `2026-11-22`; the dashboard's "today" section will be
+empty while today is not a Sunday. Use the Sessions screen with a September–November
+range to review the seeded attendance. The Angular dev server uses
 `frontend/proxy.conf.json`, so the browser talks to `/v1` on the same origin.
 
 ## Quality gate
@@ -93,7 +110,8 @@ dedicated `schoolops_test` database, created automatically, so local data is unt
 - [x] Dashboard, not-seen report, attendance reports and CSV exports
 - [x] Audit trail — append-only actor/changes log and query screen
 - [x] Hardening — production config guards, security headers, request IDs, JSON logs, body limit
-- [ ] Seed/demo data and deployment
+- [x] Seed/demo data — `just demo`
+- [ ] Deployment runbook and production checks
 
 ## Conventions
 
